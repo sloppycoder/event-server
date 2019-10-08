@@ -1,0 +1,12 @@
+.idea/
+bin/
+*.bak
+*.log
+*.so
+*.*~
+*.iml
+*.swp
+*.gz
+
+# binaries
+server
