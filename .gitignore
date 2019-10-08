@@ -7,6 +7,3 @@ bin/
 *.iml
 *.swp
 *.gz
-
-# binaries
-server
