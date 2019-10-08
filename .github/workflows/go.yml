@@ -22,7 +22,7 @@ jobs:
     - name: Build
       run: |
         go get
-        go build -o server-linux-amd64 ./cmd/server
+        go build -o server-linux-amd64 ./cmd/server/server.go
 
     - name: Upload artifacts
       uses: skx/github-action-publish-binaries@master
