@@ -21,7 +21,6 @@ jobs:
 
     - name: Build
       run: |
-        go test -v
         go build -o server-linux-amd64 ./cmd/server
 
     - name: Upload artifacts
