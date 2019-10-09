@@ -32,18 +32,20 @@ type accountServiceServerImpl struct {
 
 func (s *accountServiceServerImpl) GetTopAccounts(req *api.GetTopAccountRequest, svr api.AccountService_GetTopAccountsServer) error {
 	ctx := context.Background()
-	for i := 0; i < 500; i++ {
+	defer ctx.Done()
+
+	for i := 0; i < 100; i++ {
 		accounts, err := repo.GetTopAccounts(ctx, req.Count)
+
 		if err != nil {
-			log.Printf("error from MongoDB %+v\n", err)
+			log.Printf("error from MongoDB %+v", err)
 			return status.Error(codes.Unavailable, err.Error())
 		}
 
 		for _, acc := range accounts {
 			err = svr.Send(acc)
 			if err != nil {
-				log.Printf("error streaming %+v\n", err)
-				ctx.Done()
+				log.Printf("error streaming %+v", err)
 				return nil
 			}
 		}
