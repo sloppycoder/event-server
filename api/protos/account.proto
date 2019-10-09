@@ -12,12 +12,12 @@ import "google/protobuf/empty.proto";
 service AccountService {
   rpc GetAccount (GetAccountRequest) returns (Account) {
     option (google.api.http) = {
-      get: "/accounts/{account_id}"
+      get: "/api/accounts/{account_id}"
     };
   }
   rpc GetTopAccounts (GetTopAccountRequest) returns (stream Account) {
     option (google.api.http) = {
-      get: "/top/{count}"
+      get: "/api/top/{count}"
     };
   }
 }
