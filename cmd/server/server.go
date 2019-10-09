@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/izumin5210/grapi/pkg/grapiserver"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 

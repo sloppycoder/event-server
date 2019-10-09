@@ -86,7 +86,7 @@ func GetAccountById(ctx context.Context, id string) (*api.Account, error) {
 	return account, nil
 }
 
-func GetTopAccounts(ctx context.Context) ([]*api.Account, error) {
+func GetTopAccounts(ctx context.Context, count int64) ([]*api.Account, error) {
 	db := db(ctx)
 	cur, _ := db.Collection("accounts").Find(ctx,
 		bson.D{{"accountId",
@@ -99,7 +99,7 @@ func GetTopAccounts(ctx context.Context) ([]*api.Account, error) {
 
 	i := 0
 	accounts := make([]*api.Account, 3)
-	for cur.Next(context.Background()) {
+	for cur.Next(ctx) {
 		var acc Account
 		err := cur.Decode(&acc)
 		if err != nil {

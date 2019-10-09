@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
+	"log"
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/izumin5210/grapi/pkg/grapiserver"
@@ -30,18 +30,26 @@ func NewAccountServiceServer() AccountServiceServer {
 type accountServiceServerImpl struct {
 }
 
-func (s *accountServiceServerImpl) GetTopAccounts(e *empty.Empty, svr api.AccountService_GetTopAccountsServer) error {
-	for i := 0; i < 5; i++ {
-		accounts, err := repo.GetTopAccounts(svr.Context())
+func (s *accountServiceServerImpl) GetTopAccounts(req *api.GetTopAccountRequest, svr api.AccountService_GetTopAccountsServer) error {
+	ctx := context.Background()
+	for i := 0; i < 500; i++ {
+		accounts, err := repo.GetTopAccounts(ctx, req.Count)
 		if err != nil {
-			return status.Error(codes.Unavailable, "something went wrong")
+			log.Printf("error from MongoDB %+v\n", err)
+			return status.Error(codes.Unavailable, err.Error())
 		}
 
 		for _, acc := range accounts {
-			svr.Send(acc)
+			err = svr.Send(acc)
+			if err != nil {
+				log.Printf("error streaming %+v\n", err)
+				ctx.Done()
+				return nil
+			}
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		log.Printf("iteration %d", i)
+		time.Sleep(1000 * time.Millisecond)
 	}
 	return nil
 }

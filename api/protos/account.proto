@@ -15,9 +15,9 @@ service AccountService {
       get: "/accounts/{account_id}"
     };
   }
-  rpc GetTopAccounts (google.protobuf.Empty) returns (stream Account) {
+  rpc GetTopAccounts (GetTopAccountRequest) returns (stream Account) {
     option (google.api.http) = {
-      get: "/top"
+      get: "/top/{count}"
     };
   }
 }
@@ -55,4 +55,8 @@ message Balance {
 
 message GetAccountRequest {
   string account_id = 1;
+}
+
+message GetTopAccountRequest {
+  int64 count = 1;
 }

@@ -14,7 +14,6 @@ import (
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
 	"google.golang.org/grpc"
@@ -57,8 +56,26 @@ func request_AccountService_GetAccount_0(ctx context.Context, marshaler runtime.
 }
 
 func request_AccountService_GetTopAccounts_0(ctx context.Context, marshaler runtime.Marshaler, client AccountServiceClient, req *http.Request, pathParams map[string]string) (AccountService_GetTopAccountsClient, runtime.ServerMetadata, error) {
-	var protoReq empty.Empty
+	var protoReq GetTopAccountRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["count"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "count")
+	}
+
+	protoReq.Count, err = runtime.Int64(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "count", err)
+	}
 
 	stream, err := client.GetTopAccounts(ctx, &protoReq)
 	if err != nil {
@@ -157,7 +174,7 @@ func RegisterAccountServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 var (
 	pattern_AccountService_GetAccount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"accounts", "account_id"}, ""))
 
-	pattern_AccountService_GetTopAccounts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"top"}, ""))
+	pattern_AccountService_GetTopAccounts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"top", "count"}, ""))
 )
 
 var (
