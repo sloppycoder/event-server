@@ -24,18 +24,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3600*time.Second)
 	defer cancel()
 	r, err := c.GetTopAccounts(ctx, &api.GetTopAccountRequest{Count: 10})
-	//r, err := c.GetAccount(ctx, &api.GetAccountRequest{ AccountId: "58870000580"})
 	if err != nil {
 		log.Fatalf("could not greet: %+v", err)
 	}
+	log.Printf("%v", r)
 
-	for {
-		acc, err := r.Recv()
-		if err != nil {
-			log.Printf("error during read %+v", err)
-			break
-		}
-		log.Println(acc)
-	}
-	log.Printf("Greeting: %+v\n", r)
 }

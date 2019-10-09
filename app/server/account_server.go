@@ -2,11 +2,9 @@ package server
 
 import (
 	"context"
+	"google.golang.org/grpc/grpclog"
 	"log"
 	"strings"
-	"time"
-
-	"google.golang.org/grpc/grpclog"
 
 	"github.com/izumin5210/grapi/pkg/grapiserver"
 	"google.golang.org/grpc/codes"
@@ -30,35 +28,19 @@ func NewAccountServiceServer() AccountServiceServer {
 type accountServiceServerImpl struct {
 }
 
-func (s *accountServiceServerImpl) GetTopAccounts(req *api.GetTopAccountRequest, svr api.AccountService_GetTopAccountsServer) error {
-	ctx := context.Background()
-	defer ctx.Done()
+func (s *accountServiceServerImpl) GetTopAccounts(ctx context.Context, req *api.GetTopAccountRequest) (*api.GetTopAccountResponse, error) {
+	accounts, err := repo.GetTopAccounts(ctx, req.Count)
 
-	for i := 0; i < 100; i++ {
-		accounts, err := repo.GetTopAccounts(ctx, req.Count)
-
-		if err != nil {
-			log.Printf("error from MongoDB %+v", err)
-			return status.Error(codes.Unavailable, err.Error())
-		}
-
-		for _, acc := range accounts {
-			err = svr.Send(acc)
-			if err != nil {
-				log.Printf("error streaming %+v", err)
-				return nil
-			}
-		}
-
-		log.Printf("iteration %d", i)
-		time.Sleep(1000 * time.Millisecond)
+	if err != nil {
+		log.Printf("error from MongoDB %+v", err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	return nil
+
+	return &api.GetTopAccountResponse{Accounts: accounts}, nil
 }
 
 func (s *accountServiceServerImpl) GetAccount(ctx context.Context, req *api.GetAccountRequest) (*api.Account, error) {
 	id := req.AccountId
-	// grpclog.Infof("getAccount for %s", id)
 	if "" == id || "0" == id {
 		grpclog.Infof("invalid account id: %s", id)
 		return nil, status.Error(codes.InvalidArgument, "Invalid account id")

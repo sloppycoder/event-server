@@ -87,18 +87,16 @@ func GetAccountById(ctx context.Context, id string) (*api.Account, error) {
 }
 
 func GetTopAccounts(ctx context.Context, count int64) ([]*api.Account, error) {
+	opts := options.Find()
+	opts.SetLimit(count)
 	db := db(ctx)
-	cur, _ := db.Collection("accounts").Find(ctx,
-		bson.D{{"accountId",
-			bson.D{{"$in",
-				bson.A{"5887000023", "5201442870", "7191518545"}}}}})
+	cur, _ := db.Collection("accounts").Find(ctx, bson.D{}, opts)
 
 	if err := cur.Err(); err != nil {
 		return nil, err
 	}
 
-	i := 0
-	accounts := make([]*api.Account, 3)
+	accounts := make([]*api.Account, 0)
 	for cur.Next(ctx) {
 		var acc Account
 		err := cur.Decode(&acc)
@@ -106,11 +104,11 @@ func GetTopAccounts(ctx context.Context, count int64) ([]*api.Account, error) {
 			continue
 		}
 
-		accounts[i], err = mapAccount(&acc)
+		tmp, err := mapAccount(&acc)
 		if err != nil {
-			grpclog.Info("Mapping account got error %v", err)
+			continue
 		}
-		i++
+		accounts = append(accounts, tmp)
 	}
 
 	return accounts, nil
