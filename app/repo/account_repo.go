@@ -89,6 +89,8 @@ func GetAccountById(ctx context.Context, id string) (*api.Account, error) {
 func GetTopAccounts(ctx context.Context, count int64) ([]*api.Account, error) {
 	opts := options.Find()
 	opts.SetLimit(count)
+	opts.SetSort(bson.D{{"accountId", 1}})
+
 	db := db(ctx)
 	cur, _ := db.Collection("accounts").Find(ctx, bson.D{}, opts)
 
