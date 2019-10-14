@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"grpc-account-svc/app/server"
+	"grpc-account-svc/app/sse"
 	"os"
 
 	"github.com/izumin5210/grapi/pkg/grapiserver"
@@ -10,11 +11,14 @@ import (
 )
 
 func main() {
+	go sse.EventServer()
+
 	err := run()
 	if err != nil {
 		grpclog.Errorf("server was shutdown with errors: %v", err)
 		os.Exit(1)
 	}
+
 }
 
 func run() error {
