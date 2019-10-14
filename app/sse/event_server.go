@@ -78,6 +78,10 @@ func (b *Broker) Start() {
 	}()
 }
 
+const MaxAccounts = 30
+
+var prevAccounts map[string]*api.Account
+
 // This Broker method handles and HTTP request at the "/events/" URL.
 //
 func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -93,6 +97,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Create a new channel, over which the broker can
 	// send this client messages.
 	messageChan := make(chan string)
+	prevAccounts = make(map[string]*api.Account, MaxAccounts)
 
 	// Add this client to the map of those that should
 	// receive updates
@@ -156,8 +161,6 @@ func EventServer() {
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
 	go func() {
-		const MaxAccounts = 30
-		prevAccounts := map[string]*api.Account{}
 
 		tsLastMessage := time.Now()
 
@@ -169,6 +172,10 @@ func EventServer() {
 			if err != nil {
 				grpclog.Info("error from MongoDB %+v", err)
 				continue
+			}
+
+			if prevAccounts == nil {
+				prevAccounts = make(map[string]*api.Account, MaxAccounts)
 			}
 
 			for _, acc := range accounts {
