@@ -1,9 +1,9 @@
 package main
 
 import (
-	"grpc-account-svc"
+	"eventserver"
 )
 
 func main() {
-	accounts.EventServer()
+	eventserver.EventServer()
 }

@@ -1,4 +1,4 @@
-module grpc-account-svc
+module eventserver
 
 go 1.13
 
