@@ -88,11 +88,6 @@ var prevAccounts map[string]*api.Account
 //
 func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	setupResponse(&w, r)
-	if r.Method == "OPTIONS" {
-		return
-	}
-
 	// Make sure that the writer supports flushing.
 	//
 	f, ok := w.(http.Flusher)
@@ -122,7 +117,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Set the headers related to event streaming.
 	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Cache-Control", "no-transform")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Transfer-Encoding", "chunked")
 
@@ -145,12 +140,6 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Done.
 	grpclog.Info("Finished HTTP request at ", r.URL.Path)
-}
-
-func setupResponse(w *http.ResponseWriter, req *http.Request) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
 
 func EventServer() {
