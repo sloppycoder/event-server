@@ -8,6 +8,8 @@ import (
 	"grpc-account-svc/api"
 	"grpc-account-svc/app/repo"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -78,13 +80,18 @@ func (b *Broker) Start() {
 	}()
 }
 
-const MaxAccounts = 30
+const MaxAccounts = 15
 
 var prevAccounts map[string]*api.Account
 
 // This Broker method handles and HTTP request at the "/events/" URL.
 //
 func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	setupResponse(&w, r)
+	if r.Method == "OPTIONS" {
+		return
+	}
 
 	// Make sure that the writer supports flushing.
 	//
@@ -122,7 +129,6 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Don't close the connection, instead loop endlessly.
 	for {
 
-		// Read from our messageChan.
 		msg, open := <-messageChan
 
 		if !open {
@@ -131,16 +137,20 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		// Write to the ResponseWriter, `w`.
-		fmt.Fprintf(w, "data: Message: %s\n\n", msg)
+		//fmt.Fprintf(w, "event: message\n")
+		fmt.Fprintf(w, "data: %s\n\n", msg)
 
-		// Flush the response.  This is only possible if
-		// the repsonse supports streaming.
 		f.Flush()
 	}
 
 	// Done.
 	grpclog.Info("Finished HTTP request at ", r.URL.Path)
+}
+
+func setupResponse(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
 
 func EventServer() {
@@ -156,6 +166,15 @@ func EventServer() {
 	broker.Start()
 
 	http.Handle("/events/", broker)
+
+	keepalive := 300 //default
+	s := os.Getenv("EVENT_SERVER_POLL")
+	if s != "" {
+		i, err := strconv.Atoi(s)
+		if err == nil {
+			keepalive = i
+		}
+	}
 
 	// Query database and identify changed records, then send
 	// into the Broker's messages channel and are then broadcast
@@ -189,7 +208,7 @@ func EventServer() {
 						tsLastMessage = time.Now()
 
 						grpclog.Infof("Sending updated account %s", acc.AccountId)
-						grpclog.Infof("\nold = %+v\nnew = %+v", prev, acc)
+						//grpclog.Infof("\nold = %+v\nnew = %+v", prev, acc)
 					} else {
 						grpclog.Infof("Unable to send changed data to client %+v", err)
 					}
@@ -203,7 +222,7 @@ func EventServer() {
 				grpclog.Infof("sending empty object for keep-alive")
 			}
 
-			time.Sleep(300 * time.Millisecond)
+			time.Sleep(time.Duration(keepalive) * time.Millisecond)
 		}
 	}()
 
