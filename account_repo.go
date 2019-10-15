@@ -3,31 +3,20 @@ package eventserver
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"os"
 )
 
-type Balance struct {
-	Amount      float64 `json:"amount,omitempty"`
-	Type        string  `json:"type,omitempty"`
-	CreditFlag  bool    `json:"credit_flag,omitempty"`
-	LastUpdated string  `bson:"last_updated, omitempty" json:"last_updated,omitempty"`
-}
-
 type Account struct {
-	Id                primitive.ObjectID `bson:"_id, omitempty" json:"-"`
-	AccountId         string             `json:"account_id,omitempty"`
-	Nickname          string             `json:"nickname,omitempty"`
-	ProdCode          string             `json:"prod_code,omitempty"`
-	ProdName          string             `json:"prod_name,omitempty"`
-	Currency          string             `json:"currency,omitempty"`
-	Servicer          string             `json:"servicer,omitempty"`
-	Status            string             `json:"status,omitempty"`
-	StatusLastUpdated string             `bson:"status_last_updated, omitempty" json:"status_last_updated,omitempty"`
-	Balances          []*Balance         `json:"balances,omitempty"`
+	AccountId         string `json:"accountId,omitempty"`
+	Nickname          string `json:"nickname,omitempty"`
+	ProdCode          string `json:"prodCode,omitempty"`
+	LedgerBalance     string `json:"ledgerBalance"`
+	Currency          string `json:"currency,omitempty"`
+	Status            string `json:"status,omitempty"`
+	StatusLastUpdated int64  `json:"statusLastUpdated,omitempty"`
 }
 
 var _db *mongo.Database
@@ -50,6 +39,10 @@ func GetTopAccounts(ctx context.Context, count int64) ([]*Account, error) {
 		err := cur.Decode(&acc)
 		if err != nil {
 			continue
+		}
+
+		if acc.LedgerBalance == "" {
+			acc.LedgerBalance = "0.00"
 		}
 
 		accounts = append(accounts, &acc)

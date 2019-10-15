@@ -72,7 +72,7 @@ func (b *Broker) Start() {
 				for s := range b.clients {
 					s <- msg
 				}
-				log.Println("Broadcast message to %d clients", len(b.clients))
+				log.Printf("Broadcast message to %d clients\n", len(b.clients))
 			}
 		}
 	}()
@@ -221,13 +221,8 @@ func isSame(a, b *Account) bool {
 		a.Nickname == b.Nickname &&
 		a.Currency == b.Currency &&
 		a.ProdCode == b.ProdCode &&
-		a.ProdName == b.ProdName &&
-		a.Servicer == b.Servicer &&
 		a.Status == b.Status &&
-		a.Balances[0].Amount == b.Balances[0].Amount &&
-		a.Balances[0].CreditFlag == b.Balances[0].CreditFlag &&
-		a.Balances[1].Amount == b.Balances[1].Amount &&
-		a.Balances[1].CreditFlag == b.Balances[1].CreditFlag {
+		a.LedgerBalance == b.LedgerBalance {
 		return true
 	}
 	return false

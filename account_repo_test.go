@@ -11,6 +11,5 @@ func Test_GetTopAccounts(t *testing.T) {
 	ctx := context.Background()
 	accs, err := GetTopAccounts(ctx, 10)
 	assert.Nil(t, err)
-	assert.Equal(t, 3, len(accs))
-
+	assert.Equal(t, 2, len(accs))
 }
