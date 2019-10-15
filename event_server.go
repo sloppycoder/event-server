@@ -1,12 +1,10 @@
-package sse
+package accounts
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"google.golang.org/grpc/grpclog"
-	"grpc-account-svc/api"
-	"grpc-account-svc/app/repo"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -55,7 +53,7 @@ func (b *Broker) Start() {
 				// There is a new client attached and we
 				// want to start sending them messages.
 				b.clients[s] = true
-				grpclog.Info("Added new client")
+				log.Println("Added new client")
 
 			case s := <-b.defunctClients:
 
@@ -64,7 +62,7 @@ func (b *Broker) Start() {
 				delete(b.clients, s)
 				close(s)
 
-				grpclog.Info("Removed client")
+				log.Println("Removed client")
 
 			case msg := <-b.messages:
 
@@ -74,7 +72,7 @@ func (b *Broker) Start() {
 				for s := range b.clients {
 					s <- msg
 				}
-				grpclog.Infof("Broadcast message to %d clients", len(b.clients))
+				log.Println("Broadcast message to %d clients", len(b.clients))
 			}
 		}
 	}()
@@ -82,7 +80,7 @@ func (b *Broker) Start() {
 
 const MaxAccounts = 15
 
-var prevAccounts map[string]*api.Account
+var prevAccounts map[string]*Account
 
 // This Broker method handles and HTTP request at the "/events/" URL.
 //
@@ -99,7 +97,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Create a new channel, over which the broker can
 	// send this client messages.
 	messageChan := make(chan string)
-	prevAccounts = make(map[string]*api.Account, MaxAccounts)
+	prevAccounts = make(map[string]*Account, MaxAccounts)
 
 	// Add this client to the map of those that should
 	// receive updates
@@ -112,7 +110,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Remove this client from the map of attached clients
 		// when `EventHandler` exits.
 		b.defunctClients <- messageChan
-		grpclog.Info("HTTP connection just closed.")
+		log.Println("HTTP connection just closed.")
 	}()
 
 	// Set the headers related to event streaming.
@@ -139,7 +137,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Done.
-	grpclog.Info("Finished HTTP request at ", r.URL.Path)
+	log.Printf("Finished HTTP request at %s", r.URL.Path)
 }
 
 func EventServer() {
@@ -173,17 +171,17 @@ func EventServer() {
 		tsLastMessage := time.Now()
 
 		for {
-			grpclog.Infof("query top %d accounts for updates", MaxAccounts)
+			log.Printf("query top %d accounts for updates", MaxAccounts)
 
 			ctx := context.Background()
-			accounts, err := repo.GetTopAccounts(ctx, MaxAccounts)
+			accounts, err := GetTopAccounts(ctx, MaxAccounts)
 			if err != nil {
-				grpclog.Info("error from MongoDB %+v", err)
+				log.Printf("error from MongoDB %+v", err)
 				continue
 			}
 
 			if prevAccounts == nil {
-				prevAccounts = make(map[string]*api.Account, MaxAccounts)
+				prevAccounts = make(map[string]*Account, MaxAccounts)
 			}
 
 			for _, acc := range accounts {
@@ -196,10 +194,10 @@ func EventServer() {
 						broker.messages <- string(b)
 						tsLastMessage = time.Now()
 
-						grpclog.Infof("Sending updated account %s", acc.AccountId)
-						//grpclog.Infof("\nold = %+v\nnew = %+v", prev, acc)
+						log.Printf("Sending updated account %s", acc.AccountId)
+						//log.Printf("\nold = %+v\nnew = %+v", prev, acc)
 					} else {
-						grpclog.Infof("Unable to send changed data to client %+v", err)
+						log.Printf("Unable to send changed data to client %+v", err)
 					}
 				}
 			}
@@ -208,7 +206,7 @@ func EventServer() {
 			if time.Since(tsLastMessage).Seconds() >= 10 {
 				broker.messages <- "{}"
 				tsLastMessage = time.Now()
-				grpclog.Infof("sending empty object for keep-alive")
+				log.Printf("sending empty object for keep-alive")
 			}
 
 			time.Sleep(time.Duration(keepalive) * time.Millisecond)
@@ -218,7 +216,7 @@ func EventServer() {
 	http.ListenAndServe(":3102", nil)
 }
 
-func isSame(a, b *api.Account) bool {
+func isSame(a, b *Account) bool {
 	if a.AccountId == b.AccountId &&
 		a.Nickname == b.Nickname &&
 		a.Currency == b.Currency &&
